@@ -29,8 +29,8 @@ The project is written in Python, utilizing **FastAPI** (for the API endpoint) a
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/your-repository-name.git
-    cd your-repository-name
+    git clone https://github.com/cenoff/GeminiConnect.git
+    cd GeminiConnect
     ```
 
 2.  **Install dependencies:**
@@ -65,4 +65,4 @@ The project is written in Python, utilizing **FastAPI** (for the API endpoint) a
 
 ### Found a Bug?
 
-If something isn't working as expected, breaks, or you encounter any unforeseen issues, please don't hesitate to report it. The best way to do so is by creating an **Issue** in the project's GitHub repository.
+If you encounter a bug... please file a detailed **[Issue](https://github.com/cenoff/GeminiConnect/issues)** in this GitHub repository.
