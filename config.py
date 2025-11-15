@@ -11,12 +11,41 @@ PORT: int = int(os.getenv("PORT"))
 
 API_KEYS: List = json.loads(os.getenv("GEMINI_API_KEYS"))
 
-RATE_MODEL: str = os.getenv("RATE_MODEL")
-LITE_MODEL: str = os.getenv("LITE_MODEL")
-SIMPLE_MODEL: str = os.getenv("BASIC_MODEL")
-COMPLEX_MODEL: str = os.getenv("COMPLEX_MODEL")
-API_KEY = os.getenv("TOGETHER_API_KEY")
-MODEL = os.getenv("TOGETHER_MODEL")
+RATE_MODEL = "gemini-2.5-flash-lite"  # Evaluates complexity of user requests
+LITE_MODEL = "gemini-2.0-flash-lite"  # Handles meta requests
+SIMPLE_MODEL = "gemini-2.5-flash"
+COMPLEX_MODEL = "gemini-2.5-pro"
+
+MAIN_MODELS = [
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+]
+
+classification_prompt = """
+    Analyze the request and return JSON: {{"complexity": a number from 0 to 1}}
+    complexity should be high (0.6-1.0) for complex tasks: detailed analysis, comparisons, reasoning, long explanations, fixing errors, adding something, changing or correcting.
+    complexity should be low (0-0.5) for simple tasks: short answers, facts, basic questions.
+    I remind you that your task is not to help the user, but to return, depending on the complexity of the request, {{"complexity": a number from 0.0 to 1.0}}.
+    The request whose complexity needs to be assessed: "{prompt}"
+    DO NOT RETURN NONE, YOU MUST RETURN JSON WITH A VALUE, OTHERWISE YOU WILL BE SEVERELY PUNISHED
+    JSON:
+"""
+
+search_keywords = [
+    "Respond to the user query using the provided context",
+    "generating search queries",
+    "**prioritize generating 1-3 broad and relevant search queries**",
+]
+
+meta_keywords = [
+    "follow_ups",
+    "Generate a concise",
+    "Generate 1-3 broad tags",
+    "Suggest 3-5 relevant follow-up questions",
+]
 
 
 async def shuffle_keys():

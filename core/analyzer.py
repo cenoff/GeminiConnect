@@ -1,27 +1,21 @@
 from typing import Any, List, Dict
+from config import meta_keywords, search_keywords
 
 
 class Analyzer:
     def __init__(self):
-        self.search_keywords = [
-            "Respond to the user query using the provided context",
-            "generating search queries",
-            "**prioritize generating 1-3 broad and relevant search queries**",
-        ]
-        self.meta_keywords = [
-            "follow_ups",
-            "Generate a concise",
-            "Generate 1-3 broad tags",
-            "Suggest 3-5 relevant follow-up questions",
-        ]
+        self.search_keywords = search_keywords
+        self.meta_keywords = meta_keywords
 
     async def get_user_msg(self, messages: Any):
         has_images = False
         has_pdf = False
         user_msg = ""
+
         for msg in reversed(messages):
             if msg.role == "user":
                 content = msg.content
+
                 if isinstance(content, list):
                     has_images = any(
                         item.get("type") == "image_url"
@@ -34,11 +28,12 @@ class Analyzer:
                         for item in content
                         if isinstance(item, dict)
                     )
-                    user_msg = " ".join(
+                    text_items = [
                         item.get("text", "")
                         for item in content
                         if isinstance(item, dict) and item.get("type") == "text"
-                    )
+                    ]
+                    user_msg = text_items[-1] if text_items else ""
                 else:
                     user_msg = content
                 break
