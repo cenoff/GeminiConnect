@@ -3,29 +3,54 @@ from generator import generate_non_stream, generate
 
 @pytest.mark.asyncio
 async def test_generate_non_stream_success(mocker):
+    mocker.patch("generator.shuffle_keys", return_value=["test_key"])
+    
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
         "candidates": [{"content": {"parts": [{"text": "generated text"}]}}]
     }
     
-    mocker.patch("httpx.AsyncClient.post", return_value=mock_response)
+    async def mock_post(*args, **kwargs):
+        return mock_response
+    
+    mock_client = mocker.MagicMock()
+    mock_client.post = mock_post
+    
+    mock_client_ctx = mocker.MagicMock()
+    mock_client_ctx.__aenter__.return_value = mock_client
+    mock_client_ctx.__aexit__.return_value = None
+    
+    mocker.patch("httpx.AsyncClient", return_value=mock_client_ctx)
     
     result = await generate_non_stream("model", "msg")
     assert result == "generated text"
 
 @pytest.mark.asyncio
 async def test_generate_non_stream_failure(mocker):
+    mocker.patch("generator.shuffle_keys", return_value=["test_key"])
+    
     mock_response = mocker.Mock()
     mock_response.status_code = 500
     
-    mocker.patch("httpx.AsyncClient.post", return_value=mock_response)
+    async def mock_post(*args, **kwargs):
+        return mock_response
+    
+    mock_client = mocker.MagicMock()
+    mock_client.post = mock_post
+    
+    mock_client_ctx = mocker.MagicMock()
+    mock_client_ctx.__aenter__.return_value = mock_client
+    mock_client_ctx.__aexit__.return_value = None
+    
+    mocker.patch("httpx.AsyncClient", return_value=mock_client_ctx)
     
     result = await generate_non_stream("model", "msg")
     assert result == "[Error: All API keys failed]"
 
 @pytest.mark.asyncio
 async def test_generate_stream_success(mocker):
+    mocker.patch("generator.shuffle_keys", return_value=["test_key"])
 
     mock_response = mocker.MagicMock()
     mock_response.status_code = 200
@@ -69,6 +94,7 @@ async def test_generate_stream_success(mocker):
 
 @pytest.mark.asyncio
 async def test_generate_stream_error(mocker):
+    mocker.patch("generator.shuffle_keys", return_value=["test_key"])
 
     mock_response = mocker.MagicMock()
     mock_response.status_code = 500
