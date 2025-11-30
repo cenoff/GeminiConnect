@@ -16,12 +16,22 @@ async def choose_model(
     has_pdf: bool,
     is_search_request: bool,
     model: str,
+    stream: bool,
 ):
     if is_meta_request:
         model = LITE_MODEL
+        logging.info(f"Meta request detected, returned: {model}")
+        return model
 
     if is_search_request:
         model = SIMPLE_MODEL
+        logging.info(f"Search request detected, returned: {model}")
+        return model
+
+    if not any((is_meta_request, is_search_request, stream)):
+        model = LITE_MODEL
+        logging.info(f"Returned simple model because not meta, search or stream: {model}")
+        return model
 
     if model and model in MAIN_MODELS:
         return model
@@ -35,8 +45,6 @@ async def choose_model(
         logging.info(
             f"Response was rated as {'simple' if result <= 0.5 else 'complex'}"
         )
-    # elif is_search_request:
-    #     model = SIMPLE_MODEL
     else:
         model = COMPLEX_MODEL
 
@@ -44,10 +52,10 @@ async def choose_model(
     return model
 
 
-async def retry_logic(model, messages, gemini_contents):
+async def retry_logic(model, gemini_contents):
     has_error = False
 
-    async for chunk in generate(model, messages, gemini_contents):
+    async for chunk in generate(model, gemini_contents):
         if "[Error:" in chunk:
             logging.error(f"Caught error in chunk: {chunk}")
             has_error = True
@@ -56,7 +64,7 @@ async def retry_logic(model, messages, gemini_contents):
 
     if has_error:
         logging.info(f"Falling back to {SIMPLE_MODEL}.")
-        async for chunk in generate(SIMPLE_MODEL, messages, gemini_contents):
+        async for chunk in generate(SIMPLE_MODEL, gemini_contents):
             yield chunk
 
 
@@ -76,15 +84,18 @@ async def call_generator(
     stream: bool, is_meta_request: bool, model: str, messages: Any, user_msg: str
 ):
     gemini_contents = await convert_content(messages)
+
     if stream and not is_meta_request:
         logging.info(f"Generating streaming response with model: {model}")
+
         return StreamingResponse(
-            retry_logic(model, messages, gemini_contents),
+            retry_logic(model, gemini_contents),
             media_type="text/event-stream",
         )
     else:
         logging.info(f"Generating non-streaming response with model: {model}")
         content = await retry_logic_non_stream(model, user_msg)
+
         return JSONResponse(
             {
                 "id": "chatcmpl-1",
@@ -126,7 +137,7 @@ async def handle_request(body: Any):
     )
 
     model = await choose_model(
-        is_meta_request, user_msg, has_images, has_pdf, is_search_request, model
+        is_meta_request, user_msg, has_images, has_pdf, is_search_request, model, stream
     )
 
     try:

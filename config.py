@@ -6,10 +6,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-HOST: str = os.getenv("HOST")
-PORT: int = int(os.getenv("PORT"))
+HOST: str = os.getenv("HOST", "0.0.0.0")
+PORT: int = int(os.getenv("PORT", 8000))
 
-API_KEYS: List = json.loads(os.getenv("GEMINI_API_KEYS"))
+keys_str = os.getenv("GEMINI_API_KEYS")
+API_KEYS: List = json.loads(keys_str) if keys_str else []
 
 RATE_MODEL = "gemini-2.5-flash-lite"  # Evaluates complexity of user requests
 LITE_MODEL = "gemini-2.0-flash-lite"  # Handles meta requests
@@ -45,7 +46,14 @@ meta_keywords = [
     "Generate a concise",
     "Generate 1-3 broad tags",
     "Suggest 3-5 relevant follow-up questions",
+    "Analyze the chat history to determine the necessity of generating search queries",
 ]
+
+ARCHIVE_MIME_TYPES = {
+    "application/zip",
+    "application/x-rar",
+    "application/x-7z-compressed",
+}
 
 
 async def shuffle_keys():

@@ -1,68 +1,120 @@
-### GeminiConnect: An Advanced Proxy for Gemini API
+# GeminiConnect 
+
+![Tests](https://github.com/cenoff/GeminiConnect/actions/workflows/tests.yml/badge.svg)
+[![codecov](https://codecov.io/gh/cenoff/GeminiConnect/branch/main/graph/badge.svg)](https://codecov.io/gh/cenoff/GeminiConnect)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 **GeminiConnect** is a Python-based proxy server that adapts the Gemini API for use with any OpenAI-compatible clients, such as OpenWebUI.
 
-The primary goal of this project is to resolve issues encountered when directly connecting OpenWebUI to Google's free Gemini API.
-
-### What Problem Does It Solve?
+## Why I Built This
 
 If you've attempted to connect OpenWebUI directly to the Gemini API (especially the Pro model), you've likely faced strict rate limits.
 
-1.  **Free Pro Version Limit:** The free Gemini Pro API has a severe limitation of only 2 requests per minute.
-2.  **"Noisy" Clients:** OpenWebUI, for its internal operations (meta-requests, web search), sends numerous background requests. These requests quickly consume the entire minute's limit, making normal interaction with the model impossible.
+**Free Pro Version Limit:** The free Gemini Pro API has a severe limitation of only 2 requests per minute.
 
-### How Does GeminiConnect Fix It?
+**"Noisy" Clients:** OpenWebUI, for its internal operations (meta-requests, web search), sends numerous background requests. These requests quickly consume the entire minute's limit, making normal interaction with the model impossible.
+
+## How It Works
 
 GeminiConnect acts as an "intelligent" intermediary that addresses both issues:
 
-  * **Automatic Model Selection:** The proxy automatically determines the complexity of the user's request and decides which model to call — the fast **Flash** for simple tasks or the powerful **Pro** for complex ones.
-  * **API Key Pool (Key Feature):** The project allows you to use not just one, but an *unlimited number* of Gemini API keys. You can simply use multiple Google accounts (get keys, for example, [here](https://aistudio.google.com)) and add all free keys to the configuration. GeminiConnect will automatically **switch to the next key** if the current one exhausts its rate limit (minute-based or daily quota). With just two API keys, the aggregated throughput of the pool **exceeds** the paid Gemini tier.
+**Automatic Model Selection** - The proxy automatically determines the complexity of the user's request and decides which model to call — the fast **Flash** for simple tasks or the powerful **Pro** for complex ones.
 
-## 🎬 See the Demo in Action!
+**API Key Pool** - The project allows you to use an *unlimited number* of Gemini API keys. You can simply use multiple Google accounts and add all free keys to the configuration. GeminiConnect will automatically **switch to the next key** if the current one exhausts its rate limit. With just two API keys, the aggregated throughput of the pool **exceeds** the paid Gemini tier.
+
+## Tech Stack
+
+Here's what's under the hood:
+
+- **Python 3.11+**
+- **FastAPI** for the high-performance API endpoint
+- **httpx v2** for asynchronous non-blocking requests to Google
+- **Docker** for containerization and easy deployment
+- **Pytest** for robust testing
+
+## Installation & Setup
+
+### Prerequisites
+
+- Python 3.11 or higher
+- Gemini API Keys (get them from [Google AI Studio](https://aistudio.google.com))
+
+### Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/cenoff/GeminiConnect.git
+   cd GeminiConnect
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configuration**
+   
+   Create a `.env` file (see `.env.example`) and add your keys:
+   ```env
+   GEMINI_API_KEYS=["key1", "key2", "key3"]
+   PORT=4535
+   ```
+
+4. **Run the server**
+   ```bash
+   python main.py
+   ```
+
+### Running with Docker
+
+1. **Configure `.env`** as shown above.
+   
+2. **Build and run**:
+   ```bash
+   docker-compose up -d --build
+   ```
+   
+3. **View logs**:
+   ```bash
+   docker-compose logs -f
+   ```
+
+## Connecting to OpenWebUI
+
+1. Navigate to **Connections** settings in OpenWebUI.
+2. Add a new **OpenAI-compatible** connection.
+3. **URL**: `http://localhost:4535/v1` (adjust port if needed).
+4. **Key**: `None` (or any string).
+5. **Model Name**: 
+   - Use `Auto` to enable automatic model selection based on query complexity (shows as 1 model in the list).
+   - Leave empty to display all available models from `config.py`.
+
+## Testing
+
+The project includes **~88% test coverage** across core components:
+
+- **Unit tests** for classifier logic and data handling
+- **Integration tests** for the router and backend
+- **Async tests** for streaming response generation
+
+Run tests locally:
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+## Demo
+
+See it in action:
 
 [![GeminiConnect Demo](https://img.youtube.com/vi/UlgQ3N1PCbo/0.jpg)](https://youtu.be/UlgQ3N1PCbo)
 
-### 🛠️ Installation and Setup
+## Limitations
 
-The project is written in Python, utilizing **FastAPI** (for the API endpoint) and **httpx v2** (for asynchronous requests to Google).
+- Currently does not support the "Tools" feature in OpenWebUI.
+- Built-in OpenWebUI web search **is supported**.
 
-1.  **Clone the repository:**
+## License
 
-    ```bash
-    git clone https://github.com/cenoff/GeminiConnect.git
-    cd GeminiConnect
-    ```
-
-2.  **Install dependencies:**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3.  **Configuration and Start:**
-
-      * Configure the `.env` file (at minimum, specify the port for the server).
-      * Add your Gemini API keys to the configuration.
-      * Start the server:
-        ```bash
-        python main.py
-        ```
-
-### 🔌 Connecting to OpenWebUI
-
-1.  In OpenWebUI, navigate to "Connections" settings.
-2.  Add a new "OpenAI-compatible" (External Endpoint).
-3.  For the endpoint URL, enter: `http://localhost:YOUR_PORT/v1` (replace `YOUR_PORT` with the port you specified in `.env`).
-4.  **Auth (Authentication):** `None`.
-5.  **Model Name:** You can specify any name; it doesn't affect functionality (e.g., `gemini-connect`).
-
-### ⚠️ Limitations
-
-  * Currently, GeminiConnect **does not support** the "Tools" feature in OpenWebUI.
-  * However, the **built-in OpenWebUI web search is supported** and, thanks to the key pool, will not trigger rate limit errors.
-
------
-
-### Found a Bug?
-
-If you encounter a bug... please file a detailed **[Issue](https://github.com/cenoff/GeminiConnect/issues)** in this GitHub repository.
+This project is licensed under the [MIT License](LICENSE).

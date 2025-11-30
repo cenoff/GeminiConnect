@@ -31,11 +31,16 @@ class Analyzer:
                     text_items = [
                         item.get("text", "")
                         for item in content
-                        if isinstance(item, dict) and item.get("type") == "text"
+                        if isinstance(item, dict) and "text" in item
                     ]
-                    user_msg = text_items[-1] if text_items else ""
+                    user_msg = " ".join(text_items) if text_items else ""
                 else:
                     user_msg = content
+                
+                if isinstance(user_msg, str) and "Query: History:" in user_msg:
+                    parts = user_msg.rsplit("Query: ", 1)
+                    if len(parts) > 1:
+                        user_msg = parts[1].strip()
                 break
         return has_images, user_msg, has_pdf
 

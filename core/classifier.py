@@ -6,7 +6,6 @@ from config import RATE_MODEL, shuffle_keys, classification_prompt
 
 
 async def rate_response(prompt: str):
-    print(len(prompt))
     if len(prompt) > 200:
         logging.info(
             f"Query length ({len(prompt)} chars) > 200, rated as complex (1.0)"
